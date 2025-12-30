@@ -3,6 +3,7 @@ build/
 sdkconfig
 sdkconfig.old
 sdkconfig.*.old
+.cache/*
 
 # ESP-IDF Component Manager
 dependencies.lock

@@ -2,6 +2,9 @@
 
 ESP32-based firmware for the HLK-LD6002B-3D presence detection radar sensor with real-time 3D web visualization using SSE (Server-Sent Events) streaming and Three.js.
 
+
+![HLK LD6002B-3D Radar Sensor](docs/hlk-ld6002b-3d.png)
+
 ## Project Overview
 
 This project provides a complete firmware solution for interfacing the **HLK-LD6002B-3D** 60GHz FMCW radar sensor with an ESP32-C3 microcontroller. The firmware implements the full TinyFrame communication protocol and provides:

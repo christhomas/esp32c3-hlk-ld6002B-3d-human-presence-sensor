@@ -7,9 +7,9 @@
 #include "esp_err.h"
 #include <stdbool.h>
 
-// WiFi Configuration - UPDATE THESE WITH YOUR CREDENTIALS
-#define WIFI_SSID      "YOUR_WIFI_SSID_HERE"
-#define WIFI_PASSWORD  "YOUR_WIFI_PASSWORD_HERE"
+// WiFi credentials are stored in a separate file (not in git)
+// Copy wifi_credentials.h.example to wifi_credentials.h and update with your credentials
+#include "wifi_credentials.h"
 
 // WiFi connection timeout
 #define WIFI_CONNECT_TIMEOUT_MS 10000

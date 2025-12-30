@@ -1,0 +1,4 @@
+# Python dependencies for build tools
+htmlmin>=0.1.12    # HTML minification
+rjsmin>=1.2.0      # JavaScript minification (industry standard, very fast)
+rcssmin>=1.1.0     # CSS minification (industry standard, very fast)

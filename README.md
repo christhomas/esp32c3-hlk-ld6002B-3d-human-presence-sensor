@@ -1,6 +1,6 @@
 # HLK-LD6002B-3D Radar Sensor with Web Visualization
 
-ESP32-based firmware for the HLK-LD6002B-3D presence detection radar sensor with real-time 3D web visualization using WebSocket streaming and Three.js.
+ESP32-based firmware for the HLK-LD6002B-3D presence detection radar sensor with real-time 3D web visualization using SSE (Server-Sent Events) streaming and Three.js.
 
 ## Project Overview
 
@@ -33,7 +33,7 @@ This project can be built using **ESP-IDF directly** or through **PlatformIO**:
 
 1. **Hardware:** Wire sensor to ESP32-C3 (see [Wiring](#wiring))
 2. **Software:** Install PlatformIO VS Code extension OR ESP-IDF
-3. **Configure:** Edit WiFi credentials in [`src/wifi_manager.h`](src/wifi_manager.h)
+3. **Configure WiFi:** Copy [`src/wifi_credentials.h.example`](src/wifi_credentials.h.example) to `src/wifi_credentials.h` and add your WiFi credentials
 4. **Build:** `pio run --target upload --target monitor` OR `idf.py flash monitor`
 5. **Access:** Open http://radar.local in your browser
 
@@ -58,9 +58,19 @@ See detailed instructions below for your chosen build system.
 🌐 **Web Interface**
 - Real-time SSE (Server-Sent Events) streaming with ~100ms latency
 - Interactive 3D visualization with Three.js
+- **Live configuration interface** for sensor settings
+- **3D zone visualization** with semi-transparent boundaries
 - Responsive design with HUD overlay
 - Supports multiple simultaneous viewers (up to 4 clients)
 - Accessible via WiFi (http://radar.local or IP address)
+
+⚙️ **Live Configuration Controls**
+- Sensitivity adjustment (Low/Medium/High)
+- Trigger speed control (Slow/Medium/Fast)
+- Detection zone reset
+- Interference zone management
+- Auto-generation of interference zones
+- Real-time feedback on configuration changes
 
 📊 **Smart Logging**
 - Movement-based filtering to reduce console spam
@@ -108,12 +118,18 @@ curl -LO https://github.com/espressif/esp-idf/releases/download/v5.1.2/esp-idf-i
 
 #### 2. Configure WiFi Credentials
 
-Edit [`src/wifi_manager.h`](src/wifi_manager.h) and update:
+⚠️ **IMPORTANT:** You must create your WiFi credentials file before building!
 
-```c
-#define WIFI_SSID      "YOUR_WIFI_SSID_HERE"
-#define WIFI_PASSWORD  "YOUR_WIFI_PASSWORD_HERE"
+```bash
+# Copy the example file
+cp src/wifi_credentials.h.example src/wifi_credentials.h
+
+# Edit with your WiFi credentials
+# Replace YOUR_WIFI_SSID_HERE and YOUR_WIFI_PASSWORD_HERE
+nano src/wifi_credentials.h  # or use any text editor
 ```
+
+The `wifi_credentials.h` file is in `.gitignore` and will never be committed to git, keeping your WiFi password secure.
 
 #### 3. Build and Flash with ESP-IDF
 
@@ -151,12 +167,18 @@ https://code.visualstudio.com/
 
 #### 2. Configure WiFi Credentials
 
-Same as ESP-IDF option - edit [`src/wifi_manager.h`](src/wifi_manager.h):
+⚠️ **IMPORTANT:** You must create your WiFi credentials file before building!
 
-```c
-#define WIFI_SSID      "YOUR_WIFI_SSID_HERE"
-#define WIFI_PASSWORD  "YOUR_WIFI_PASSWORD_HERE"
+```bash
+# Copy the example file
+cp src/wifi_credentials.h.example src/wifi_credentials.h
+
+# Edit with your WiFi credentials
+# Replace YOUR_WIFI_SSID_HERE and YOUR_WIFI_PASSWORD_HERE
+# You can use VS Code or any text editor
 ```
+
+The `wifi_credentials.h` file is in `.gitignore` and will never be committed to git, keeping your WiFi password secure.
 
 #### 3. Build and Flash with PlatformIO
 
@@ -224,24 +246,75 @@ Once the ESP32 connects to WiFi, access the web interface at:
 - **By hostname:** http://radar.local
 - **By IP:** http://[IP_ADDRESS] (shown in serial console)
 
-### Controls
+### 3D View Controls
 
 - **Mouse drag:** Rotate camera view
 - **Mouse wheel:** Zoom in/out
 - **Reset View:** Return camera to default position
 - **Hide/Show Grid:** Toggle floor grid display
 - **Hide/Show Zones:** Toggle detection zone wireframes
+- **Trail Length Slider:** Adjust target trajectory history (0-100 steps)
 
-### Visualization
+### Configuration Panel
 
-- **3D Grid:** Floor plane with coordinate axes (X=red, Y=green, Z=blue)
-- **Target Spheres:** Detected targets
-  - 🟢 Green: Stationary target
-  - 🟠 Orange: Moving target
-- **Wireframe Boxes:** Detection zones (4 zones)
-  - Blue: Empty zone
-  - Green: Occupied zone
-- **HUD:** Real-time statistics and status
+The live configuration panel allows real-time sensor adjustment without reflashing firmware:
+
+#### Sensitivity Settings
+- **Low:** Fewer false positives, stable detection for large rooms
+- **Medium:** Balanced performance (default)
+- **High:** Detects subtle movements, best for multi-person tracking
+
+#### Trigger Speed Settings
+- **Slow:** 2-3 second response time, minimal false triggers
+- **Medium:** 1-2 second response (default)
+- **Fast:** <1 second response, ideal for active environments
+
+#### Zone Commands
+- **Reset Detection:** Restore detection zones to factory defaults (full 3m range)
+- **Clear Interference:** Remove all learned interference zones
+- **Auto-Gen Interference:** Automatically learn and create interference zones
+  - ⚠️ **Warning:** Ensure no people are in the detection area during this 30-60 second process
+
+All configuration changes are:
+- ✅ Sent via secure HTTP POST to `/config` endpoint
+- ✅ Processed by command queue (thread-safe)
+- ✅ Confirmed with visual feedback
+- ✅ Applied immediately to the sensor
+- ✅ Broadcast to all connected clients via SSE
+
+### 3D Visualization
+
+#### Target Display
+- **Colored Spheres:** Detected targets with unique IDs
+  - Each target gets a persistent color from a 10-color palette
+  - 🏃 Bright/glowing: Moving target
+  - 🧍 Dimmed: Stationary target
+- **Trail Lines:** Smooth curved trajectories showing target movement history
+  - Adjustable length (0-100 steps)
+  - Color-matched to target
+
+#### Zone Visualization
+- **Detection Zones (Blue):**
+  - Semi-transparent blue boxes showing 4 detection zones
+  - Edges highlighted with wireframe
+  - Labels display zone boundaries (X/Y/Z min/max in meters)
+  - Turn green when occupied
+- **Interference Zones (Orange):**
+  - Semi-transparent orange boxes for learned interference areas
+  - Only displayed if configured
+  - Help reduce false positives from static objects
+
+#### Scene Elements
+- **3D Grid:** Floor plane with coordinate axes
+  - X-axis (Red): Left (-) to Right (+)
+  - Y-axis (Green): Front (+) to Back (-)
+  - Z-axis (Blue): Ground (0) to Height (+)
+- **Direction Arrow:** Red arrow labeled "FRONT" shows sensor orientation
+- **HUD:** Real-time statistics
+  - Connection status
+  - Target count
+  - Zone occupancy (4 zones)
+  - Frame count and FPS
 
 ## Configuration
 
@@ -378,12 +451,32 @@ Approximate memory footprint on ESP32-C3:
 
 ## Troubleshooting
 
+### WiFi Credentials Not Found Error
+
+If you see a build error about missing `wifi_credentials.h`:
+
+```bash
+fatal error: wifi_credentials.h: No such file or directory
+```
+
+**Solution:**
+```bash
+# Copy the example file to create your credentials file
+cp src/wifi_credentials.h.example src/wifi_credentials.h
+
+# Edit it with your WiFi network name and password
+nano src/wifi_credentials.h  # or use any text editor
+```
+
+The `wifi_credentials.h` file must exist but is never committed to git (it's in `.gitignore`).
+
 ### WiFi Connection Issues
 
-1. **Check credentials** in [`wifi_manager.h`](src/wifi_manager.h)
+1. **Check credentials** in [`src/wifi_credentials.h`](src/wifi_credentials.h) - ensure SSID and password are correct
 2. **Signal strength** - ensure ESP32 is within range
-3. **2.4GHz network** - ESP32-C3 only supports 2.4GHz WiFi
+3. **2.4GHz network** - ESP32-C3 only supports 2.4GHz WiFi (not 5GHz)
 4. **Serial output** shows connection status and errors
+5. **Special characters** - if your WiFi password has special characters, ensure they're properly escaped in C strings
 
 ### Sensor Not Responding
 
@@ -454,7 +547,7 @@ hlk_ld6002/
 ├── src/
 │   ├── main.c              # Main application + TinyFrame parser
 │   ├── wifi_manager.h/c    # WiFi connection management
-│   ├── web_server.h/c      # HTTP server + WebSocket streaming
+│   ├── web_server.h/c      # HTTP server + SSE streaming
 │   └── CMakeLists.txt      # Source build configuration
 ├── docs/
 │   ├── product-overview.md           # Product comparison & specifications
@@ -488,16 +581,73 @@ hlk_ld6002/
 
 ⚠️ **Important:** The LD6002, LD6002B, and LD6002C variants have **mutually exclusive capabilities**. See [`product-overview.md`](docs/product-overview.md) for details.
 
+## Configuration API
+
+### HTTP POST Endpoint
+
+The web interface communicates with the ESP32 via HTTP POST to `/config`:
+
+```javascript
+// Example: Set sensitivity to high
+fetch('/config', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ cmd: 'sensitivity', value: 'high' })
+});
+
+// Example: Reset detection zones
+fetch('/config', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ cmd: 'reset_detection' })
+});
+```
+
+### Supported Commands
+
+| Command | Value Options | Description |
+|---------|--------------|-------------|
+| `sensitivity` | `low`, `medium`, `high` | Adjust detection sensitivity |
+| `trigger_speed` | `slow`, `medium`, `fast` | Adjust trigger response time |
+| `clear_interference` | - | Clear interference zones |
+| `reset_detection` | - | Reset detection zones to defaults |
+| `auto_interference` | - | Auto-generate interference zones |
+| `get_zones` | - | Request current zone configuration |
+
+### SSE Message Types
+
+The server broadcasts these message types via SSE at `/events`:
+
+```javascript
+// Target positions
+{"type":"target","data":[{"x":-0.16,"y":-0.17,"z":0.43,"v":0,"c":1},...]}
+
+// Presence status (4 zones)
+{"type":"presence","data":[1,0,0,0]}
+
+// Configuration updates
+{"type":"config","data":{"sensitivity":2,"trigger_speed":2,"install_method":1}}
+
+// Detection zones (4 zones with boundaries)
+{"type":"detection_zones","data":[{"x_min":-1.5,"x_max":1.5,"y_min":-1.5,"y_max":1.5,"z_min":0.0,"z_max":2.5},...]}
+
+// Interference zones
+{"type":"interference_zones","data":[...]}
+```
+
 ## Future Enhancements
 
 - [ ] Offline mode (embed Three.js instead of CDN)
 - [ ] SPIFFS support for separate HTML file updates
-- [ ] WebSocket control commands (adjust settings from web UI)
+- [x] **Bidirectional control commands** (adjust settings from web UI using POST requests) ✅
+- [x] **3D zone visualization** with semi-transparent boundaries ✅
 - [ ] Data logging to SD card
 - [ ] MQTT support for Home Assistant integration
 - [ ] Mobile-responsive controls
 - [ ] Historical data visualization
 - [ ] Multi-sensor support
+- [ ] Custom zone boundary editor
+- [ ] Installation method toggle (top/side mounted)
 
 ## License
 

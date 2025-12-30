@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HLK-LD6002B-3D Radar</title>
+    <style>/* CSS_PLACEHOLDER */</style>
+</head>
+<body>
+    <div id="container">
+        <canvas id="canvas"></canvas>
+        
+        <div id="left-panel">
+            <!-- HUD Section (Top) -->
+            <div id="hud">
+                <h2>🎯 HLK-LD6002B-3D</h2>
+                <div class="status">
+                    <span class="label">Connection:</span>
+                    <span id="status" class="value disconnected">Disconnected</span>
+                </div>
+                <div class="status">
+                    <span class="label">Targets:</span>
+                    <span id="target-count" class="value">0</span>
+                </div>
+                <div class="status">
+                    <span class="label">Zone 0:</span>
+                    <span id="zone0" class="value">Empty</span>
+                </div>
+                <div class="status">
+                    <span class="label">Zone 1:</span>
+                    <span id="zone1" class="value">Empty</span>
+                </div>
+                <div class="status">
+                    <span class="label">Zone 2:</span>
+                    <span id="zone2" class="value">Empty</span>
+                </div>
+                <div class="status">
+                    <span class="label">Zone 3:</span>
+                    <span id="zone3" class="value">Empty</span>
+                </div>
+                <div class="status">
+                    <span class="label">Frames:</span>
+                    <span id="frame-count" class="value">0</span>
+                </div>
+                <div class="status">
+                    <span class="label">FPS:</span>
+                    <span id="fps" class="value">0</span>
+                </div>
+            </div>
+            
+            <!-- Target List Section (Middle - Flexible) -->
+            <div id="target-panel">
+                <div id="target-panel-header">
+                    <h3>📍 Tracked Targets</h3>
+                    <div id="target-panel-count">0 targets</div>
+                </div>
+                <div id="target-list"></div>
+            </div>
+            
+            <!-- Configuration Section (Middle-Bottom) -->
+            <div id="config-panel">
+                <h3>⚙️ Configuration</h3>
+                
+                <div class="config-section">
+                    <label class="config-label">Sensitivity</label>
+                    <select id="sensitivity-select" class="config-select" onchange="setSensitivity(this.value)">
+                        <option value="low">Low</option>
+                        <option value="medium" selected>Medium</option>
+                        <option value="high">High</option>
+                    </select>
+                </div>
+                
+                <div class="config-section">
+                    <label class="config-label">Trigger Speed</label>
+                    <select id="trigger-select" class="config-select" onchange="setTriggerSpeed(this.value)">
+                        <option value="slow">Slow</option>
+                        <option value="medium" selected>Medium</option>
+                        <option value="fast">Fast</option>
+                    </select>
+                </div>
+                
+                <div class="config-section">
+                    <label class="config-label">Zone Commands</label>
+                    <button class="config-btn" onclick="resetDetectionZone()">Reset Detection</button>
+                    <button class="config-btn" onclick="clearInterferenceZone()">Clear Interference</button>
+                    <button class="config-btn warning" onclick="autoGenInterference()">Auto-Gen Interference</button>
+                </div>
+                
+                <div id="feedback-msg"></div>
+            </div>
+            
+            <!-- Controls Section (Bottom) -->
+            <div id="controls">
+                <button class="btn" onclick="resetView()">Reset View</button>
+                <button class="btn" onclick="toggleGrid()" id="grid-btn">Hide Grid</button>
+                <button class="btn" onclick="toggleZones()" id="zones-btn">Hide Zones</button>
+                <div style="margin-top:10px; padding-top:10px; border-top:1px solid rgba(255,255,255,0.2)">
+                    <label style="display:block; margin-bottom:5px; font-size:12px">Trail Length (max 100)</label>
+                    <input type="range" id="trail-slider" min="0" max="100" value="50"
+                           style="width:100%" oninput="updateTrailLength(this.value)">
+                    <div style="text-align:center; font-size:11px; margin-top:3px">
+                        <span id="trail-value">50</span> / 100 steps
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>/* JS_PLACEHOLDER */</script>
+</body>
+</html>

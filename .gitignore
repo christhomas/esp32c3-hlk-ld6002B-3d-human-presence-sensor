@@ -8,6 +8,12 @@ sdkconfig.*.old
 dependencies.lock
 managed_components/
 
+# WiFi Credentials (DO NOT COMMIT)
+src/wifi_credentials.h
+
+# Generated webapp files (built during compilation)
+*.min.html
+
 # Python byte-compiled files
 *.pyc
 __pycache__/
